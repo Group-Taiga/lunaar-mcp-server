@@ -1,6 +1,6 @@
 {
   "name": "@lunaar/mcp-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Model Context Protocol server for the Lunaar Public API — exposes AI rendering, virtual try-on, 3D generation, and more as MCP tools usable from Claude Desktop, Cursor, Windsurf, and any MCP-compatible host.",
   "license": "MIT",
   "type": "module",
@@ -14,7 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/snapshot-fallback.mjs",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "prepublishOnly": "npm run build"

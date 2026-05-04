@@ -1,0 +1,351 @@
+{
+  "version": "1",
+  "baseUrl": "https://api.lunaarvision.com",
+  "tools": [
+    {
+      "name": "lunaar_sketch_to_render",
+      "description": "Convert a sketch (interior / exterior / kitchen) to a photoreal render. Returns the final image URL. 15 credits per call. Refunded on provider failure.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "imagePath": { "type": "string", "description": "Local path to the sketch (jpg/png/webp/heic, ≤25 MB)." },
+          "sceneType": { "type": "string", "enum": ["interior", "exterior", "kitchen"], "default": "interior" },
+          "timeOfDay": { "type": "string", "enum": ["day", "evening"], "default": "day" },
+          "lowerCabinetSurface": { "type": "string", "enum": ["matte", "soft_satin", "satin", "glossy"], "description": "Kitchen only." },
+          "upperCabinetSurface": { "type": "string", "enum": ["matte", "soft_satin", "satin", "glossy"], "description": "Kitchen only." },
+          "tallCabinetSurface": { "type": "string", "enum": ["matte", "soft_satin", "satin", "glossy"], "description": "Kitchen only." },
+          "countertopSurface": { "type": "string", "enum": ["matte", "soft_satin", "satin", "glossy"], "description": "Kitchen only." },
+          "handleFinish": { "type": "string", "enum": ["matte", "glossy"], "description": "Kitchen only." },
+          "accessory": { "type": "boolean", "description": "Kitchen only — render countertop accessories." },
+          "glassCabinetLed": { "type": "boolean", "description": "Kitchen only — LED inside glass cabinets." },
+          "openShelfLed": { "type": "boolean", "description": "Kitchen only — LED under open shelves." }
+        },
+        "required": ["imagePath"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/sketch-to-img",
+        "body": "multipart",
+        "fields": [
+          { "name": "Image", "kind": "file", "from": "imagePath" },
+          { "name": "SceneType", "kind": "enum", "from": "sceneType", "map": { "interior": 0, "exterior": 1, "kitchen": 2 } },
+          { "name": "TimeOfDay", "kind": "enum", "from": "timeOfDay", "map": { "day": 0, "evening": 1 } },
+          { "name": "LowerCabinetSurface", "kind": "enum", "from": "lowerCabinetSurface", "optional": true, "map": { "matte": 0, "soft_satin": 1, "satin": 2, "glossy": 3 } },
+          { "name": "UpperCabinetSurface", "kind": "enum", "from": "upperCabinetSurface", "optional": true, "map": { "matte": 0, "soft_satin": 1, "satin": 2, "glossy": 3 } },
+          { "name": "TallCabinetSurface", "kind": "enum", "from": "tallCabinetSurface", "optional": true, "map": { "matte": 0, "soft_satin": 1, "satin": 2, "glossy": 3 } },
+          { "name": "CountertopSurface", "kind": "enum", "from": "countertopSurface", "optional": true, "map": { "matte": 0, "soft_satin": 1, "satin": 2, "glossy": 3 } },
+          { "name": "HandleFinish", "kind": "enum", "from": "handleFinish", "optional": true, "map": { "matte": 0, "glossy": 1 } },
+          { "name": "Accessory", "kind": "boolean", "from": "accessory", "optional": true },
+          { "name": "GlassCabinetLed", "kind": "boolean", "from": "glassCabinetLed", "optional": true },
+          { "name": "OpenShelfLed", "kind": "boolean", "from": "openShelfLed", "optional": true }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 180000
+      },
+      "result": {
+        "label": "Sketch ({sceneType}, {timeOfDay})"
+      }
+    },
+    {
+      "name": "lunaar_studio_tryon",
+      "description": "Virtual try-on. SingleItem (10 credits): person + 1 garment. Combo (15): person + 2-6 garments. Layer (15): person + 3 stacked garments. Summer (15): swimwear with environment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": { "type": "string", "enum": ["single_item", "combo", "layer", "summer"] },
+          "personImagePath": { "type": "string", "description": "Required for single_item / combo / layer. Not used for summer." },
+          "clothingImagePath": { "type": "string", "description": "single_item only." },
+          "clothingCategory": { "type": "string", "enum": ["dress", "top", "bottom", "accessory", "shoes", "outerwear"], "description": "single_item only." },
+          "topImagePath": { "type": "string" },
+          "bottomImagePath": { "type": "string" },
+          "dressImagePath": { "type": "string" },
+          "outerwearImagePath": { "type": "string" },
+          "accessoryImagePath": { "type": "string" },
+          "shoesImagePath": { "type": "string" },
+          "layer1ImagePath": { "type": "string" },
+          "layer2ImagePath": { "type": "string" },
+          "layer3ImagePath": { "type": "string" },
+          "bikiniTopImagePath": { "type": "string" },
+          "bikiniBottomImagePath": { "type": "string" },
+          "swimSuitImagePath": { "type": "string" },
+          "menSwimwearImagePath": { "type": "string" },
+          "backgroundSeason": { "type": "string", "enum": ["spring", "summer", "autumn", "winter", "studio"] },
+          "fitType": { "type": "string", "enum": ["slim_fit", "regular_fit", "relaxed_fit", "oversize"] },
+          "dressLength": { "type": "string", "enum": ["mini", "short", "midi", "maxi"] },
+          "maskImagePath": { "type": "string" }
+        },
+        "required": ["mode"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/studio",
+        "body": "multipart",
+        "fields": [
+          { "name": "Mode", "kind": "enum", "from": "mode", "map": { "single_item": 1, "combo": 2, "layer": 3, "summer": 4 } },
+          { "name": "PersonImage", "kind": "file", "from": "personImagePath", "optional": true },
+          { "name": "ClothingImage", "kind": "file", "from": "clothingImagePath", "optional": true },
+          { "name": "ClothingCategory", "kind": "enum", "from": "clothingCategory", "optional": true, "map": { "dress": 1, "top": 2, "bottom": 3, "accessory": 4, "shoes": 5, "outerwear": 6 } },
+          { "name": "TopImage", "kind": "file", "from": "topImagePath", "optional": true },
+          { "name": "BottomImage", "kind": "file", "from": "bottomImagePath", "optional": true },
+          { "name": "DressImage", "kind": "file", "from": "dressImagePath", "optional": true },
+          { "name": "OuterwearImage", "kind": "file", "from": "outerwearImagePath", "optional": true },
+          { "name": "AccessoryImage", "kind": "file", "from": "accessoryImagePath", "optional": true },
+          { "name": "ShoesImage", "kind": "file", "from": "shoesImagePath", "optional": true },
+          { "name": "Layer1Image", "kind": "file", "from": "layer1ImagePath", "optional": true },
+          { "name": "Layer2Image", "kind": "file", "from": "layer2ImagePath", "optional": true },
+          { "name": "Layer3Image", "kind": "file", "from": "layer3ImagePath", "optional": true },
+          { "name": "BikiniTopImage", "kind": "file", "from": "bikiniTopImagePath", "optional": true },
+          { "name": "BikiniBottomImage", "kind": "file", "from": "bikiniBottomImagePath", "optional": true },
+          { "name": "SwimSuitImage", "kind": "file", "from": "swimSuitImagePath", "optional": true },
+          { "name": "MenSwimwearImage", "kind": "file", "from": "menSwimwearImagePath", "optional": true },
+          { "name": "BackgroundSeason", "kind": "enum", "from": "backgroundSeason", "optional": true, "map": { "spring": 1, "summer": 2, "autumn": 3, "winter": 4, "studio": 5 } },
+          { "name": "FitType", "kind": "enum", "from": "fitType", "optional": true, "map": { "slim_fit": 1, "regular_fit": 2, "relaxed_fit": 3, "oversize": 4 } },
+          { "name": "DressLength", "kind": "enum", "from": "dressLength", "optional": true, "map": { "mini": 1, "short": 2, "midi": 3, "maxi": 4 } },
+          { "name": "MaskImage", "kind": "file", "from": "maskImagePath", "optional": true }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 180000,
+        "captureCreatedId": true
+      },
+      "result": {
+        "label": "Studio ({mode})",
+        "extras": [
+          { "when": "completed", "field": "id", "from": "created", "label": "entityId for /poses" }
+        ]
+      }
+    },
+    {
+      "name": "lunaar_studio_poses",
+      "description": "Generate 1-3 alternate-pose variants of a previously rendered Studio item. 10 credits per pose. Failed poses are auto-refunded.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "parentEntityId": { "type": "string", "description": "Studio entity id (the entityId returned by lunaar_studio_tryon — NOT the operationId)." },
+          "poseTypes": { "type": "array", "items": { "type": "string", "enum": ["front", "side45", "side90", "back"] }, "minItems": 1, "maxItems": 3 }
+        },
+        "required": ["parentEntityId", "poseTypes"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/studio/poses",
+        "body": "json",
+        "jsonShape": {
+          "parentEntityId": { "from": "parentEntityId" },
+          "poseTypes": { "from": "poseTypes", "kind": "enumArray", "map": { "front": 1, "side45": 2, "side90": 3, "back": 4 } }
+        },
+        "expects": "operation-array",
+        "pollTimeoutMs": 120000
+      },
+      "result": {
+        "label": "Pose"
+      }
+    },
+    {
+      "name": "lunaar_jewelry_tryon",
+      "description": "Composite a jewelry product onto a model or display surface. Box (10 credits), ProductModel (10), CustomSurfaceBox (15), CustomModel (15).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "jewelryImagePath": { "type": "string" },
+          "displayMode": { "type": "string", "enum": ["box_display", "product_model_display", "custom_surface_box_display", "custom_model_display"] },
+          "productType": { "type": "string", "enum": ["ring", "necklace", "bracelet", "watch", "earring"] },
+          "gender": { "type": "string", "enum": ["male", "female"], "description": "Required for product_model_display + custom_model_display." },
+          "secondaryImagePath": { "type": "string", "description": "Required for custom_surface_box_display + custom_model_display." }
+        },
+        "required": ["jewelryImagePath", "displayMode", "productType"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/jewelry-tryon",
+        "body": "multipart",
+        "fields": [
+          { "name": "JewelryImage", "kind": "file", "from": "jewelryImagePath" },
+          { "name": "DisplayMode", "kind": "enum", "from": "displayMode", "map": { "box_display": 1, "product_model_display": 2, "custom_surface_box_display": 3, "custom_model_display": 4 } },
+          { "name": "ProductType", "kind": "enum", "from": "productType", "map": { "ring": 1, "necklace": 2, "bracelet": 3, "watch": 4, "earring": 5 } },
+          { "name": "Gender", "kind": "enum", "from": "gender", "optional": true, "map": { "male": 1, "female": 2 } },
+          { "name": "SecondaryImage", "kind": "file", "from": "secondaryImagePath", "optional": true }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 120000
+      },
+      "result": {
+        "label": "Jewelry ({displayMode}, {productType})"
+      }
+    },
+    {
+      "name": "lunaar_glasses_tryon",
+      "description": "Place a pair of glasses on a model's face with anatomy-aware fit. 10 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "personImagePath": { "type": "string" },
+          "glassesImagePath": { "type": "string" }
+        },
+        "required": ["personImagePath", "glassesImagePath"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/glasses-tryon",
+        "body": "multipart",
+        "fields": [
+          { "name": "PersonImage", "kind": "file", "from": "personImagePath" },
+          { "name": "GlassesImage", "kind": "file", "from": "glassesImagePath" }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 120000
+      },
+      "result": {
+        "label": "Glasses try-on"
+      }
+    },
+    {
+      "name": "lunaar_body_estimation",
+      "description": "Extract anatomical measurements (chest, waist, hip) from a single full-body photo. 10 credits per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "imagePath": { "type": "string", "description": "Full-body photo, subject fully visible, plain background." },
+          "heightCm": { "type": "integer", "minimum": 100, "maximum": 250, "description": "Subject height in centimetres." }
+        },
+        "required": ["imagePath", "heightCm"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/body-estimation",
+        "body": "multipart",
+        "fields": [
+          { "name": "Image", "kind": "file", "from": "imagePath" },
+          { "name": "HeightCm", "kind": "number", "from": "heightCm" }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 120000
+      },
+      "result": {
+        "label": "Body estimation"
+      }
+    },
+    {
+      "name": "lunaar_image_to_3d",
+      "description": "Generate a GLB 3D model + spinning preview video from a single product photo. 20 credits per call. Latency 2-4 minutes — may exceed default polling window; if so, use lunaar_get_operation later.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "imagePath": { "type": "string" },
+          "targetHeightCm": { "type": "number", "description": "Real-world height for scale calibration." }
+        },
+        "required": ["imagePath"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/image-3d",
+        "body": "multipart",
+        "fields": [
+          { "name": "Image", "kind": "file", "from": "imagePath" },
+          { "name": "TargetHeightCm", "kind": "number", "from": "targetHeightCm", "optional": true }
+        ],
+        "expects": "operation",
+        "pollTimeoutMs": 240000
+      },
+      "result": {
+        "label": "Image-to-3D"
+      }
+    },
+    {
+      "name": "lunaar_model_to_ar",
+      "description": "Upload an existing GLB (and optional USDZ + thumbnail) and get a public AR-viewer URL. 5 credits per call. Returns inline (sync).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "glbFilePath": { "type": "string" },
+          "usdzFilePath": { "type": "string" },
+          "thumbnailImagePath": { "type": "string" }
+        },
+        "required": ["title", "glbFilePath"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/model-to-ar",
+        "body": "multipart",
+        "fields": [
+          { "name": "Title", "kind": "string", "from": "title" },
+          { "name": "GlbFile", "kind": "file", "from": "glbFilePath" },
+          { "name": "UsdzFile", "kind": "file", "from": "usdzFilePath", "optional": true },
+          { "name": "ThumbnailImage", "kind": "file", "from": "thumbnailImagePath", "optional": true }
+        ],
+        "expects": "sync"
+      },
+      "result": {
+        "label": "Model-to-AR",
+        "syncFields": ["modelId", "url", "glbUrl", "usdzUrl", "thumbnailUrl"]
+      }
+    },
+    {
+      "name": "lunaar_upscale",
+      "description": "Re-render a previously completed AI operation at higher resolution. 5 credits per call. May return inline (200) or queued (202 + poll).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operationId": { "type": "string", "description": "OperationId of any completed /v1/ai/* run." }
+        },
+        "required": ["operationId"]
+      },
+      "transport": {
+        "method": "POST",
+        "pathTemplate": "/v1/ai/upscale/{operationId}",
+        "body": "empty",
+        "expects": "upscale",
+        "pollTimeoutMs": 90000
+      },
+      "result": {
+        "label": "Upscale"
+      }
+    },
+    {
+      "name": "lunaar_get_operation",
+      "description": "Inspect any operation by id. Use this when an earlier tool returned a non-terminal status, or to poll a long-running Image-to-3D run.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "operationId": { "type": "string" }
+        },
+        "required": ["operationId"]
+      },
+      "transport": {
+        "method": "GET",
+        "pathTemplate": "/v1/operations/{operationId}",
+        "expects": "operation-snapshot"
+      },
+      "result": {
+        "label": "Operation {operationId}"
+      }
+    },
+    {
+      "name": "lunaar_list_operations",
+      "description": "List recent operations for the current API key. Useful for picking up an operationId you forgot or auditing recent calls.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "minimum": 1, "default": 1 },
+          "pageSize": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 },
+          "type": { "type": "string", "enum": ["SketchToImg", "AiClothing", "JewelryTryOn", "GlassesTryOn", "BodyEstimation", "ImageTo3D", "ModelToAr"] },
+          "status": { "type": "string", "enum": ["Pending", "Processing", "Completed", "Failed", "Cancelled"] }
+        }
+      },
+      "transport": {
+        "method": "GET",
+        "pathTemplate": "/v1/operations",
+        "query": [
+          { "name": "pageNumber", "kind": "number", "from": "page" },
+          { "name": "pageSize", "kind": "number", "from": "pageSize" },
+          { "name": "type", "kind": "string", "from": "type", "optional": true },
+          { "name": "status", "kind": "string", "from": "status", "optional": true }
+        ],
+        "expects": "list"
+      },
+      "result": {
+        "label": "Operations list"
+      }
+    }
+  ]
+}
