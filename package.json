@@ -32,7 +32,7 @@
   "homepage": "https://platform.lunaarvision.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Group-Taiga/lunaar-mcp-server.git"
+    "url": "git+https://github.com/Group-Taiga/lunaar-mcp-server.git"
   },
   "bugs": {
     "url": "https://github.com/Group-Taiga/lunaar-mcp-server/issues"

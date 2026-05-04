@@ -101,12 +101,55 @@ LUNAAR_API_KEY=lk_live_... node dist/index.js
 
 ## Releasing
 
+Releases are driven by **git tags + GitHub Actions** — never publish from a
+laptop once the npm automation token is configured. The flow:
+
 ```bash
-npm version patch    # or minor / major
-npm publish --access public
+# bump in package.json + create matching tag in one go
+npm version patch        # 0.1.0 → 0.1.1   (or minor / major)
+git push --follow-tags   # pushes both the bump commit AND the v0.1.1 tag
 ```
 
-Versioning follows semver. Breaking tool-schema changes (renamed args, removed enum values) → minor bump until 1.0, major after.
+The `Release` workflow in `.github/workflows/release.yml` picks up the tag,
+runs `npm ci && npm run build`, publishes with `npm publish --access public
+--provenance` (npm provenance signs the package against the GitHub commit),
+and creates a GitHub Release with auto-generated notes.
+
+### One-time CI setup
+
+1. **Generate a granular automation token on npm:**
+   - https://www.npmjs.com/settings/<your-user>/tokens → **Generate New Token → Granular Access Token**.
+   - Permissions → **Packages and scopes**: `Read and write` for `@lunaar/mcp-server`.
+   - **Bypass 2FA:** ON (CI cannot prompt for OTP).
+   - Expiration: 1 year is a sensible balance.
+
+2. **Store it as the repo secret `NPM_TOKEN`:**
+   - https://github.com/Group-Taiga/lunaar-mcp-server/settings/secrets/actions → **New repository secret** → name `NPM_TOKEN`.
+
+3. **First end-to-end run:** push a no-op patch tag (`npm version patch && git push --follow-tags`). Watch the Release workflow run; if it goes green and the new version appears on https://www.npmjs.com/package/@lunaar/mcp-server, the pipeline is wired up.
+
+After that, every future release is just `npm version <type> && git push --follow-tags`.
+
+### Version bump conventions
+
+- **patch** (`0.1.0 → 0.1.1`) — bug fixes, doc tweaks, new optional tool params, internal refactors.
+- **minor** (`0.1.x → 0.2.0`) — new tools, new required params (rare — prefer optional), enum value additions, bumped polling timeouts.
+- **major** (`0.x → 1.0`, then `1.x → 2.x`) — removed tools, renamed args, removed/renamed enum values, breaking schema changes.
+
+While `< 1.0`, treat **minor** as the breaking-change boundary (semver convention).
+
+### When to release
+
+Push a new patch / minor whenever the upstream Lunaar Public API changes in a
+way that a tool needs to know about:
+
+- New endpoint added → new tool registration → minor bump.
+- Existing endpoint adds an optional field → patch bump (extend the Zod schema).
+- Endpoint removes a field, renames an enum value, or changes a route → major bump and call out the migration in `CHANGELOG.md`.
+
+Day-to-day, you don't have to keep this package in lockstep with PublicApi —
+the wire format is intentionally stable. Bump only when you've added user-
+visible value (a new tool, a clearer description, a fix).
 
 ## License
 
